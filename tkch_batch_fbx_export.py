@@ -7,15 +7,15 @@
 bl_info = {
     "name": "結合済みFBX出力",
     "author": "eijis-pan",
-    "version": (0, 1),
+    "version": (0, 2),
     # "blender": (2, 79, 0),
     "blender": (2, 80, 0),
     "location": "View3D > Sidebar",
     "description": "Mikoko、Nekoma向けFBX出力の事前処理自動化アドオン: \
 ミラーモディファイア適用、オブジェクト結合、シェイプキー順序変更を段階ごとに行いFBX出力する",
-    "warning": "情報（Info）ウィンドウに「例外発生」「FBX出力はエラーで中断しました。」と出力される場合はアドオンを削除して再インストールすると直ることがあります。",
+    "warning": "",
     "support": "TESTING",
-    "wiki_url": "",
+    "wiki_url": "https://github.com/eijis-pan/tkch_batch_fbx_export",
     "tracker_url": "",
     "category": "Import-Export"
 }
@@ -189,8 +189,8 @@ import mathutils
 from mathutils import *
 from math import *
 
-C = bpy.context
-D = bpy.data
+# C = bpy.context
+# D = bpy.data
 
 from bpy.props import StringProperty
 
@@ -363,7 +363,7 @@ class IntegratedExporter:
             filename_prefix = ext_split_list[0]
 
             # ミラーモディファイアを適用する（ミラーモディファイアが設定されているオブジェクトすべて）
-            IntegratedExporter._all_mirror_modifier_apply(context_)
+            IntegratedExporter._all_mirror_modifier_apply(context_=context_)
 
             # 段階ごとにオブジェクトを結合する
             group_list = MODEL_INFO.OBJ_JOIN_GROUPS[model_name] if model_name in MODEL_INFO.OBJ_JOIN_GROUPS else None
@@ -412,7 +412,7 @@ class IntegratedExporter:
     def _all_mirror_modifier_apply(context_):
         logging.debug('ミラーモディファイアを適用する（ミラーモディファイアが設定されているメッシュオブジェクトすべて）')
         count = 0
-        for obj in D.objects:
+        for obj in bpy.data.objects:
             if not isinstance(obj.data, types.Mesh):
                 continue
 
@@ -484,7 +484,7 @@ class IntegratedExporter:
 
             head_found = False
             found_member_count = 0
-            for obj in D.objects:
+            for obj in bpy.data.objects:
                 if not isinstance(obj.data, types.Mesh):
                     if hasattr(obj, 'select_set'):
                         obj.select_set(False)
@@ -553,7 +553,7 @@ class IntegratedExporter:
 
         logging.debug('アイトラッキング用にシェイプキーの順番を入れ替える')
 
-        for obj in D.objects:
+        for obj in bpy.data.objects:
             if not isinstance(obj.data, types.Mesh):
                 continue
 
