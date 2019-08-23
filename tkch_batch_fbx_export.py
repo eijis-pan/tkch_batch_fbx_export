@@ -7,7 +7,7 @@
 bl_info = {
     "name": "結合済みFBX出力",
     "author": "eijis-pan",
-    "version": (0, 2),
+    "version": (0, 3),
     # "blender": (2, 79, 0),
     "blender": (2, 80, 0),
     "location": "View3D > Sidebar",
@@ -453,6 +453,8 @@ class IntegratedExporter:
         logging.debug('オブジェクトを結合する')
 
         if hasattr(context_, 'view_layer'):
+            for (k, v) in bpy.data.collections.items():
+                v.hide_viewport = False
             for (k, v) in context_.window.view_layer.layer_collection.children.items():
                 v.exclude = False
                 v.hide_viewport = False
