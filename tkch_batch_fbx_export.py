@@ -7,7 +7,7 @@
 bl_info = {
     "name": "結合済みFBX出力",
     "author": "eijis-pan",
-    "version": (0, 3),
+    "version": (0, 4),
     # "blender": (2, 79, 0),
     "blender": (2, 80, 0),
     "location": "View3D > Sidebar",
@@ -362,6 +362,20 @@ class IntegratedExporter:
             ext_split_list = os.path.splitext(working_file)
             filename_prefix = ext_split_list[0]
 
+            # レイヤーを全て表示する
+            if hasattr(context_, 'view_layer'):
+                logging.debug('___ data.collections ___')
+                for (k, v) in bpy.data.collections.items():
+                    v.hide_viewport = False
+                logging.debug('=== layer_collection ===')
+                for (k, v) in context_.window.view_layer.layer_collection.children.items():
+                    logging.debug('view_layer: ' + v.name)
+                    v.exclude = False
+                    v.hide_viewport = False
+            else:
+                for i in range(len(context_.scene.layers)):
+                    context_.scene.layers[i] = True
+
             # ミラーモディファイアを適用する（ミラーモディファイアが設定されているオブジェクトすべて）
             IntegratedExporter._all_mirror_modifier_apply(context_=context_)
 
@@ -451,16 +465,6 @@ class IntegratedExporter:
     @staticmethod
     def _mesh_combine_by_group(context_, groups):
         logging.debug('オブジェクトを結合する')
-
-        if hasattr(context_, 'view_layer'):
-            for (k, v) in bpy.data.collections.items():
-                v.hide_viewport = False
-            for (k, v) in context_.window.view_layer.layer_collection.children.items():
-                v.exclude = False
-                v.hide_viewport = False
-        else:
-            for i in range(len(context_.scene.layers)):
-                context_.scene.layers[i] = True
 
         # 全てが対象に指定されているものは後回しにする
         group_keys = []
