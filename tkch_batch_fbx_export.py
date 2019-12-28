@@ -63,7 +63,10 @@ class MODEL_INFO:
             # 先頭から順に処理されるので、細かいものほど前に定義する必要がある（一度結合したものは分割されない）
             # 全く違うパターンで結合したい場合は、別モデルとして定義を作成し、別のボタンにする必要がある Mikoko2 とか
             #
-            'face_skin_clothes': {  # 顔と体と服を分ける設定
+            # Python 3.7 未満（Blender 2.79）では連想配列の順番が保証されないのでキーで昇順にソートして処理します。
+            # そのためキーの先頭に番号を振る必要があります。
+            #
+            '1_face_skin_clothes': {  # 顔と体と服を分ける設定
                 #
                 # ALL_OBJ_KEY を持つものを最後にする処理を入れています。
                 # （必ずしも ALL_OBJ_KEY を使う必要はありません。）
@@ -82,16 +85,21 @@ class MODEL_INFO:
                 ),
                 'Skin': (ALL_OBJ_KEY,),
             },
-            'face_and_other': {  # 顔とそれ以外を分ける設定
+            '2_face_and_other': {  # 顔とそれ以外を分ける設定
+                #
+                # 結合先オブジェクト名も順番が保証されませんが、
+                # ALL_OBJ_KEY を持つものを最後にする処理を入れています。
+                # （必ずしも ALL_OBJ_KEY を使う必要はありません。）
+                #
                 'Face': ('Face',),
                 'Skin': (ALL_OBJ_KEY,),
             },
-            'all_in_one': {  # 全てを１つに結合する設定（アバターランクをExcellentにするため）
+            '3_all_in_one': {  # 全てを１つに結合する設定（アバターランクをExcellentにするため）
                 'Skin': (ALL_OBJ_KEY,),
             },
         },
         MODEL_NAMES[1]: {  # Nekoma
-            'fix_from_master': {  # NekomaMaster_1.01.fbx から NekomaFix_1.01.fbx 相当へ結合する設定
+            '1_fix_from_master': {  # NekomaMaster_1.01.fbx から NekomaFix_1.01.fbx 相当へ結合する設定
                 'Clothes_Batwing': ('Clothes_Batwing',),
                 'Clothes_Robe': ('Clothes_Button', 'Clothes_Mimi', 'Clothes_Robe_Frill', 'Clothes_Shoes',),
                 'Eye_Main': ('Eye_Main',),
@@ -103,7 +111,7 @@ class MODEL_INFO:
                 'Tail': ('Tail_Button',),
                 'Body': (ALL_OBJ_KEY,),  # 残り全て
             },
-            'face_and_other': {  # 顔とそれ以外で分ける設定
+            '2_face_and_other': {  # 顔とそれ以外で分ける設定
                 'Face': (
                     'Face_Mouth', 'Hair_Front', 'Eye_X',
                     'Eye_SpecialEff',  # NekomaFix_1.01.fbx の場合は Eye_* がまとめられている
@@ -112,7 +120,7 @@ class MODEL_INFO:
                 ),
                 'Body': (ALL_OBJ_KEY,),  # 残り全て
             },
-            'all_in_one': {  # 全てを１つに結合する設定（アバターランクをExcellentにするため）
+            '3_all_in_one': {  # 全てを１つに結合する設定（アバターランクをExcellentにするため）
                 'Body': (ALL_OBJ_KEY,),  # 全て
             },
         },
@@ -239,19 +247,19 @@ class TKCH_OT_PreProcessAndFBXExport(bpy.types.Operator):
     bl_description = bl_info['description']
     bl_options = {'REGISTER', 'UNDO'}
 
-    ''' 
     # 2.79 用
     filepath = StringProperty(subtype="FILE_PATH")
     filename = StringProperty(subtype="FILE_NAME")
     directory = StringProperty(subtype="FILE_PATH")
     model_name = StringProperty(default=MODEL_INFO.MODEL_NAMES[0], options={"HIDDEN"})
-    '''
 
+    ''' 
     # 2.80 用
     filepath: StringProperty(subtype="FILE_PATH")
     filename: StringProperty(subtype="FILE_NAME")
     directory: StringProperty(subtype="FILE_PATH")
     model_name: StringProperty(default=MODEL_INFO.MODEL_NAMES[0], options={"HIDDEN"})
+    '''
 
     def invoke(self, context_, event):
 
@@ -387,13 +395,13 @@ class IntegratedExporter:
                 eye_t_keys = MODEL_INFO.EYE_T_KEYS[model_name] if model_name in MODEL_INFO.EYE_T_KEYS else None
 
                 '''
+                # 2.80 Python 3.7 から連想配列の順番が保証される
+                for group_name, obj_join_groups in group_list.items():
+                '''
                 # 2.79 Python 3.7 未満 から連想配列の順番が保証されないのでキーで昇順ソートする
                 group_list_keys = sorted(group_list.keys())
                 for group_name in group_list_keys:
                     obj_join_groups = group_list[group_name]
-                '''
-                # 2.80 Python 3.7 から連想配列の順番が保証される
-                for group_name, obj_join_groups in group_list.items():
 
                     logging.debug('グループ名： ' + group_name)
                     # オブジェクトを結合する
