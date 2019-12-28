@@ -7,7 +7,7 @@
 bl_info = {
     "name": "結合済みFBX出力",
     "author": "eijis-pan",
-    "version": (0, 2),
+    "version": (0, 4),
     "blender": (2, 79, 0),
     # "blender": (2, 80, 0),
     "location": "View3D > Sidebar",
@@ -63,10 +63,7 @@ class MODEL_INFO:
             # 先頭から順に処理されるので、細かいものほど前に定義する必要がある（一度結合したものは分割されない）
             # 全く違うパターンで結合したい場合は、別モデルとして定義を作成し、別のボタンにする必要がある Mikoko2 とか
             #
-            # Python 3.7 未満（Blender 2.79）では連想配列の順番が保証されないのでキーで昇順にソートして処理します。
-            # そのためキーの先頭に番号を振る必要があります。
-            #
-            '1_face_skin_clothes': {  # 顔と体と服を分ける設定
+            'face_skin_clothes': {  # 顔と体と服を分ける設定
                 #
                 # ALL_OBJ_KEY を持つものを最後にする処理を入れています。
                 # （必ずしも ALL_OBJ_KEY を使う必要はありません。）
@@ -85,21 +82,16 @@ class MODEL_INFO:
                 ),
                 'Skin': (ALL_OBJ_KEY,),
             },
-            '2_face_and_other': {  # 顔とそれ以外を分ける設定
-                #
-                # 結合先オブジェクト名も順番が保証されませんが、
-                # ALL_OBJ_KEY を持つものを最後にする処理を入れています。
-                # （必ずしも ALL_OBJ_KEY を使う必要はありません。）
-                #
+            'face_and_other': {  # 顔とそれ以外を分ける設定
                 'Face': ('Face',),
                 'Skin': (ALL_OBJ_KEY,),
             },
-            '3_all_in_one': {  # 全てを１つに結合する設定（アバターランクをExcellentにするため）
+            'all_in_one': {  # 全てを１つに結合する設定（アバターランクをExcellentにするため）
                 'Skin': (ALL_OBJ_KEY,),
             },
         },
         MODEL_NAMES[1]: {  # Nekoma
-            '1_fix_from_master': {  # NekomaMaster_1.01.fbx から NekomaFix_1.01.fbx 相当へ結合する設定
+            'fix_from_master': {  # NekomaMaster_1.01.fbx から NekomaFix_1.01.fbx 相当へ結合する設定
                 'Clothes_Batwing': ('Clothes_Batwing',),
                 'Clothes_Robe': ('Clothes_Button', 'Clothes_Mimi', 'Clothes_Robe_Frill', 'Clothes_Shoes',),
                 'Eye_Main': ('Eye_Main',),
@@ -111,7 +103,7 @@ class MODEL_INFO:
                 'Tail': ('Tail_Button',),
                 'Body': (ALL_OBJ_KEY,),  # 残り全て
             },
-            '2_face_and_other': {  # 顔とそれ以外で分ける設定
+            'face_and_other': {  # 顔とそれ以外で分ける設定
                 'Face': (
                     'Face_Mouth', 'Hair_Front', 'Eye_X',
                     'Eye_SpecialEff',  # NekomaFix_1.01.fbx の場合は Eye_* がまとめられている
@@ -120,7 +112,7 @@ class MODEL_INFO:
                 ),
                 'Body': (ALL_OBJ_KEY,),  # 残り全て
             },
-            '3_all_in_one': {  # 全てを１つに結合する設定（アバターランクをExcellentにするため）
+            'all_in_one': {  # 全てを１つに結合する設定（アバターランクをExcellentにするため）
                 'Body': (ALL_OBJ_KEY,),  # 全て
             },
         },
@@ -247,19 +239,19 @@ class TKCH_OT_PreProcessAndFBXExport(bpy.types.Operator):
     bl_description = bl_info['description']
     bl_options = {'REGISTER', 'UNDO'}
 
+    ''' 
     # 2.79 用
     filepath = StringProperty(subtype="FILE_PATH")
     filename = StringProperty(subtype="FILE_NAME")
     directory = StringProperty(subtype="FILE_PATH")
     model_name = StringProperty(default=MODEL_INFO.MODEL_NAMES[0], options={"HIDDEN"})
+    '''
 
-    ''' 
     # 2.80 用
     filepath: StringProperty(subtype="FILE_PATH")
     filename: StringProperty(subtype="FILE_NAME")
     directory: StringProperty(subtype="FILE_PATH")
     model_name: StringProperty(default=MODEL_INFO.MODEL_NAMES[0], options={"HIDDEN"})
-    '''
 
     def invoke(self, context_, event):
 
@@ -370,6 +362,20 @@ class IntegratedExporter:
             ext_split_list = os.path.splitext(working_file)
             filename_prefix = ext_split_list[0]
 
+            # レイヤーを全て表示する
+            if hasattr(context_, 'view_layer'):
+                logging.debug('___ data.collections ___')
+                for (k, v) in bpy.data.collections.items():
+                    v.hide_viewport = False
+                logging.debug('=== layer_collection ===')
+                for (k, v) in context_.window.view_layer.layer_collection.children.items():
+                    logging.debug('view_layer: ' + v.name)
+                    v.exclude = False
+                    v.hide_viewport = False
+            else:
+                for i in range(len(context_.scene.layers)):
+                    context_.scene.layers[i] = True
+
             # ミラーモディファイアを適用する（ミラーモディファイアが設定されているオブジェクトすべて）
             IntegratedExporter._all_mirror_modifier_apply(context_=context_)
 
@@ -381,13 +387,13 @@ class IntegratedExporter:
                 eye_t_keys = MODEL_INFO.EYE_T_KEYS[model_name] if model_name in MODEL_INFO.EYE_T_KEYS else None
 
                 '''
-                # 2.80 Python 3.7 から連想配列の順番が保証される
-                for group_name, obj_join_groups in group_list.items():
-                '''
                 # 2.79 Python 3.7 未満 から連想配列の順番が保証されないのでキーで昇順ソートする
                 group_list_keys = sorted(group_list.keys())
                 for group_name in group_list_keys:
                     obj_join_groups = group_list[group_name]
+                '''
+                # 2.80 Python 3.7 から連想配列の順番が保証される
+                for group_name, obj_join_groups in group_list.items():
 
                     logging.debug('グループ名： ' + group_name)
                     # オブジェクトを結合する
@@ -459,14 +465,6 @@ class IntegratedExporter:
     @staticmethod
     def _mesh_combine_by_group(context_, groups):
         logging.debug('オブジェクトを結合する')
-
-        if hasattr(context_, 'view_layer'):
-            for (k, v) in context_.window.view_layer.layer_collection.children.items():
-                v.exclude = False
-                v.hide_viewport = False
-        else:
-            for i in range(len(context_.scene.layers)):
-                context_.scene.layers[i] = True
 
         # 全てが対象に指定されているものは後回しにする
         group_keys = []
