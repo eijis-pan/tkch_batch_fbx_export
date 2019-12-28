@@ -8,14 +8,14 @@ bl_info = {
     "name": "結合済みFBX出力",
     "author": "eijis-pan",
     "version": (0, 4),
-    "blender": (2, 79, 0),
-    # "blender": (2, 80, 0),
+    # "blender": (2, 79, 0),
+    "blender": (2, 80, 0),
     "location": "View3D > Sidebar",
     "description": "Mikoko、Nekoma向けFBX出力の事前処理自動化アドオン: \
 ミラーモディファイア適用、オブジェクト結合、シェイプキー順序変更を段階ごとに行いFBX出力する",
     "warning": "",
     "support": "TESTING",
-    "wiki_url": "https://github.com/eijis-pan/tkch_batch_fbx_export/tree/Blender2.79",
+    "wiki_url": "https://github.com/eijis-pan/tkch_batch_fbx_export",
     "tracker_url": "",
     "category": "Import-Export"
 }
