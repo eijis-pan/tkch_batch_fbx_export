@@ -7,7 +7,7 @@
 bl_info = {
     "name": "結合済みFBX出力",
     "author": "eijis-pan",
-    "version": (0, 4),
+    "version": (0, 5),
     "blender": (2, 79, 0),
     # "blender": (2, 80, 0),
     "location": "View3D > Sidebar",
@@ -371,6 +371,7 @@ class IntegratedExporter:
             filename_prefix = ext_split_list[0]
 
             # レイヤーを全て表示する
+            logging.debug('レイヤーを全て表示する')
             if hasattr(context_, 'view_layer'):
                 logging.debug('___ data.collections ___')
                 for (k, v) in bpy.data.collections.items():
@@ -383,6 +384,21 @@ class IntegratedExporter:
             else:
                 for i in range(len(context_.scene.layers)):
                     context_.scene.layers[i] = True
+
+            # オブジェクトモードにする
+            logging.debug('メッシュ全ての編集モードをオブジェクトモードにする')
+            for obj in bpy.data.objects:
+                if not isinstance(obj.data, types.Mesh):
+                    continue
+                if obj.mode == 'OBJECT':
+                    continue
+                if hasattr(context_, 'view_layer'):
+                    context_.view_layer.objects.active = obj
+                else:
+                    context_.scene.objects.active = obj
+                logging.debug('obj: ' + obj.name)
+                logging.debug('mode: ' + obj.mode)
+                ops.object.mode_set(mode='OBJECT')
 
             # ミラーモディファイアを適用する（ミラーモディファイアが設定されているオブジェクトすべて）
             IntegratedExporter._all_mirror_modifier_apply(context_=context_)
