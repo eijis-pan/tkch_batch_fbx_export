@@ -20,7 +20,7 @@ FBXファイルをUnityに持っていきますが、FBXエクスポートのた
 Mikoko、Nekoma向けの設定をサンプルとして定義してあります。
 
 動作確認環境
-- Bleder 2.80
+- Blender 2.80
 - Blender 2.79  [2.79用ブランチ](https://github.com/eijis-pan/tkch_batch_fbx_export/tree/Blender2.79)
 
 ## Install
